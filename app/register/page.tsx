@@ -7,9 +7,30 @@ const RegisterPage = () => {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const router = useRouter();
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
-        router.push('/login');
+        if(password !== confirmPassword){
+          alert("Passwords do not match")
+          return;
+        }
+        try {
+          const res = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password }),
+          })
+          const data = await res.json();
+          if(!res.ok){
+            throw new Error(data.error || 'Registration failed');
+          }
+          console.log("Registration successful", data);
+          router.push('/login');
+        } catch (error) {
+          console.error("Something went wrong during registration: ", error);
+          return;
+        }
     }
   return (
     <div>
@@ -38,6 +59,9 @@ const RegisterPage = () => {
             />
             <button type="submit" className="p-2 bg-blue-500 text-white rounded">Register</button>
             </form>
+            <div>
+              <p>Already have an Account? <a href="/login">Login</a></p>
+            </div>
     </div>
   )
 }
