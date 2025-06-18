@@ -37,12 +37,22 @@ export async function POST(request: NextRequest){
             !body.videoUrl ||
             !body.thumbnailUrl
         ){
-            
+            const videoData = {
+                ...body, 
+                controls: body.controls ?? true,
+                transformation: {
+                    height: 1920,
+                    width: 1080,
+                    quality: body.transformation?.quality ?? 100
+                }
+            }
+            const newVideo = await Video.create(videoData)
+            return NextResponse.json(newVideo)
         }
     } catch (error) {
         return NextResponse.json({
-            message: "Unauthorized",
+            message: "Failed to create video",
             error: error
-        }, {status: 401})
+        }, {status: 500})
     }
 }
