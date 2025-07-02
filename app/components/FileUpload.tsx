@@ -7,12 +7,12 @@ import {
     ImageKitUploadNetworkError,
     upload,
 } from "@imagekit/next";
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 
 interface FileUploadProps {
-    onSuccess: (res: any)=> void;
-    onProgress? :(progress: number) => void;
+    onSuccess: (res: unknown) => void;
+    onProgress?: (progress: number) => void;
     fileType?: "image" | "video"
 }
 const FileUpload = ({
@@ -26,13 +26,13 @@ const FileUpload = ({
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     // optional validation function
-    const validateFile = (file: File)=> {
-        if(fileType === "video"){
-            if(!file.type.startsWith("video/")){
+    const validateFile = (file: File) => {
+        if (fileType === "video") {
+            if (!file.type.startsWith("video/")) {
                 setError("Please upload a valid video File")
             }
         }
-        if(file.size > 100 * 1024 * 1024){
+        if (file.size > 100 * 1024 * 1024) {
             setError("File size exceeds 100MB limit");
         }
         return true;
@@ -43,9 +43,9 @@ const FileUpload = ({
         if (!file || !validateFile(file)) return;
 
         // Validate the file type and size
-        if (!validateFile(file)) {
-            return;
-        }
+        // if (!validateFile(file)) {
+        //     return;
+        // }
 
         setUploading(true);
         setError(null);
@@ -53,6 +53,22 @@ const FileUpload = ({
             const authRes = await fetch("/api/auth/imagekit-auth")
             const auth = await authRes.json();
             console.log(auth)
+            const res = await upload({
+                file,
+                expire: auth.expire,
+                token: auth.token,
+                signature: auth.signature,
+                fileName: file.name,
+                publicKey: process.env.NEXTAUTH_SECRET!,
+                onProgress: (event) => {
+                    if (event.lengthComputable && onProgress) {
+                        const percent = (event.loaded / event.total) * 100;
+                        onProgress(Math.round(percent))
+                    }
+                }
+            })
+            onSuccess(res)
+
         } catch (error) {
             if (error instanceof ImageKitInvalidRequestError) {
                 setError("Invalid request. Please check the file and try again.");
@@ -65,21 +81,23 @@ const FileUpload = ({
             } else {
                 setError("An unexpected error occurred.");
             }
-            
+
+        } finally {
+            setUploading(false)
         }
     }
 
     return (
         <>
-            <input 
+            {error? <div>error</div>: <input
                 type="file"
                 accept={fileType === "video" ? "video/*" : "image/*"}
-                onChange={handleFileChange} />
-                {uploading && (
-                    <div className="mt-4">
-                        <p>Uploading...</p>
-                    </div>
-                )}
+                onChange={handleFileChange} />}
+            {uploading && (
+                <div className="mt-4">
+                    <p>Uploading...</p>)
+                </div>
+            )}
         </>
     );
 };
