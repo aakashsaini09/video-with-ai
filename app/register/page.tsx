@@ -23,6 +23,7 @@ const RegisterPage = () => {
           })
           const data = await res.json();
           if(!res.ok){
+            console.log("res: ", res, "data: ", data)
             throw new Error(data.error || 'Registration failed');
           }
           console.log("Registration successful", data);
