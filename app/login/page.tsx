@@ -15,7 +15,7 @@ const LoginPage = () => {
           redirect: false
         })
         if(result?.error){
-          console.error("Login failed: ", result.error);
+          console.error("Login failed: ", result);
           alert("Login failed: " + result.error);
           return;
         }
